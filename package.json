@@ -2,9 +2,12 @@
   "name": "wagmi-test",
   "version": "0.0.1",
   "author": "lay2",
+  "homepage": "https://unipass.github.io/wagmi-demo",
   "scripts": {
     "build": "umi build",
     "dev": "umi dev",
+    "predeploy": "yarn build",
+    "deploy": "gh-pages -d dist",
     "postinstall": "umi setup",
     "setup": "umi setup",
     "start": "npm run dev"
@@ -12,6 +15,7 @@
   "dependencies": {
     "@unipasswallet/wagmi-connector": "0.0.1-alpha.4",
     "antd": "^5.1.5",
+    "gh-pages": "^4.0.0",
     "umi": "^4.0.44",
     "wagmi": "^0.7.0"
   },
