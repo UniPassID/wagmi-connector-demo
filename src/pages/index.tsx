@@ -17,7 +17,7 @@ const { TextArea } = Input;
 const domain = {
   name: "Ether Mail",
   version: "1",
-  chainId: 80001,
+  chainId: 5,
   verifyingContract: "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
 } as const;
 
