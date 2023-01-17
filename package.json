@@ -2,7 +2,7 @@
   "name": "wagmi-test",
   "version": "0.0.1",
   "author": "lay2",
-  "homepage": "https://unipass.github.io/wagmi-demo",
+  "homepage": "https://unipassid.github.io/wagmi-connector-demo",
   "scripts": {
     "build": "umi build",
     "dev": "umi dev",

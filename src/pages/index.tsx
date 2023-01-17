@@ -84,7 +84,7 @@ function App() {
   const signMessage = async () => {
     if (signer) {
       const signature = await signer.signMessage(
-        "Welcome to use Wagmi with unipass"
+        "Welcome to use Wagmi with unipass!"
       );
       setSignature(signature);
     }
@@ -121,9 +121,6 @@ function App() {
             >
               {connector.name}
               {!connector.ready && " (unsupported)"}
-              {isLoading &&
-                connector.id === pendingConnector?.id &&
-                " (connecting)"}
             </Button>
           ))}
         </>
