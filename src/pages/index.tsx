@@ -1,5 +1,5 @@
 import { etherToWei, weiToEther } from "@/unipass/format_bignumber";
-import { Button, Divider, Input } from "antd";
+import { Button, Divider, Input, message } from "antd";
 import { providers } from "ethers";
 import { useEffect, useState } from "react";
 import {
@@ -56,6 +56,7 @@ function App() {
   const [chainId, setChainId] = useState(0);
   const [signature, setSignature] = useState("");
   const [nativeHash, setNativeHash] = useState("");
+  const [sendNativeLoading, setSendNativeLoading] = useState(false);
 
   const {
     data: typedDataSig,
@@ -92,18 +93,25 @@ function App() {
 
   const sendTransaction = async () => {
     if (signer && address) {
-      const txParams = {
-        from: address,
-        to: "0x2B6c74b4e8631854051B1A821029005476C3AF06",
-        value: etherToWei("0.001"),
-        data: "0x",
-      };
-      console.log(txParams);
+      try {
+        setSendNativeLoading(true);
+        const txParams = {
+          from: address,
+          to: "0x2B6c74b4e8631854051B1A821029005476C3AF06",
+          value: etherToWei("0.001"),
+          data: "0x",
+        };
+        console.log(txParams);
 
-      const txResp = await signer.sendTransaction(txParams);
-      const res = await txResp.wait();
-      console.log(res);
-      setNativeHash(res.transactionHash);
+        const txResp = await signer.sendTransaction(txParams);
+        const res = await txResp.wait();
+        console.log(res);
+        setNativeHash(res.transactionHash);
+      } catch (e: any) {
+        message.error(e?.message || "error");
+      } finally {
+        setSendNativeLoading(false);
+      }
     }
   };
 
@@ -177,7 +185,12 @@ function App() {
       <TextArea rows={4} value={typedDataSig} />
       <Divider />
       <h3>Send Transaction:</h3>
-      <Button onClick={sendTransaction} type="primary" disabled={!isConnected}>
+      <Button
+        onClick={sendTransaction}
+        type="primary"
+        disabled={!isConnected}
+        loading={sendNativeLoading}
+      >
         Send native Token
       </Button>
       <h4>native tx hash:</h4>
