@@ -10,16 +10,8 @@ export default function Layout() {
   const { chains, provider } = configureChains(
     [
       {
-        ...chain.mainnet,
-        rpcUrls: { default: "https://node.wallet.unipass.id/eth-mainnet" },
-      },
-      {
         ...chain.goerli,
         rpcUrls: { default: "https://node.wallet.unipass.id/eth-goerli" },
-      },
-      {
-        ...chain.polygon,
-        rpcUrls: { default: "https://node.wallet.unipass.id/polygon-mainnet" },
       },
       {
         ...chain.polygonMumbai,
@@ -32,7 +24,7 @@ export default function Layout() {
   const unipass = new UniPassConnector({
     options: {
       connect: {
-        chainId: 5,
+        chainId: chain.polygonMumbai.id,
         returnEmail: false,
         appSettings: {
           appName: "wagmi demo",
@@ -50,6 +42,7 @@ export default function Layout() {
       chains,
       options: {
         qrcode: true,
+        chainId: chain.polygonMumbai.id,
       },
     }),
   ];
