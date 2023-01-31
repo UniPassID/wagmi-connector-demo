@@ -12,6 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Push
     steps:
+      - name: git-checkout
+        uses: actions/checkout@v2
+        with:
+          lfs: true
+    
       - name: Install Dependencies
         run: |
           npm i -g yarn
