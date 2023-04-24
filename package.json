@@ -13,12 +13,12 @@
     "start": "npm run dev"
   },
   "dependencies": {
-    "@unipasswallet/wagmi-connector": "^1.0.1",
+    "@unipasswallet/wagmi-connector": "^1.1.9",
     "antd": "^5.1.5",
     "gh-pages": "^4.0.0",
     "siwe": "^1.1.6",
     "umi": "^4.0.44",
-    "wagmi": "^0.7.0"
+    "wagmi": "^0.11.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.0",
