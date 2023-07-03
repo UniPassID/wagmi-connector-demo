@@ -1,53 +1,42 @@
 import { UniPassConnector } from "@unipasswallet/wagmi-connector";
 import { Outlet } from "umi";
-import { configureChains, createClient, WagmiConfig } from "wagmi";
+import { configureChains, createConfig, WagmiConfig } from "wagmi";
 import { goerli, polygonMumbai } from "wagmi/chains";
 import { MetaMaskConnector } from "wagmi/connectors/metaMask";
-import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
 import { publicProvider } from "wagmi/providers/public";
 import styles from "./index.less";
 
 export default function Layout() {
-  const { chains, provider } = configureChains(
+  const { chains, publicClient } = configureChains(
     [goerli, polygonMumbai],
     [publicProvider()]
   );
 
   const unipass = new UniPassConnector({
     options: {
-      connect: {
-        chainId: goerli.id,
-        returnEmail: false,
-        appSettings: {
-          appName: "wagmi demo",
-        },
+      chainId: polygonMumbai.id,
+      returnEmail: false,
+      appSettings: {
+        appName: "wagmi demo",
       },
     },
   });
 
-  const connectors = [
-    unipass,
-    new MetaMaskConnector({
-      chains,
-    }),
-    new WalletConnectConnector({
-      chains,
-      options: {
-        qrcode: true,
-        chainId: goerli.id,
-      },
-    }),
-  ];
-
-  const wagmiClient = createClient({
-    autoConnect: false,
-    connectors,
-    provider,
+  // Set up wagmi config
+  const config = createConfig({
+    autoConnect: true,
+    connectors: [
+      unipass,
+      new MetaMaskConnector({
+        chains,
+      }),
+    ],
+    publicClient,
   });
 
   return (
     <div className={styles.navs}>
-      <WagmiConfig client={wagmiClient}>
+      <WagmiConfig config={config}>
         <Outlet />
       </WagmiConfig>
     </div>

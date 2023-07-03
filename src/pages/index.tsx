@@ -1,18 +1,22 @@
 import { etherToWei, weiToEther } from "@/unipass/format_bignumber";
 import { SiweMessage } from "siwe";
 import { Button, Divider, Input, message } from "antd";
-import { providers } from "ethers";
+import { utils } from "ethers";
 import { useEffect, useState } from "react";
 import {
   useAccount,
   useConnect,
   useDisconnect,
-  useProvider,
-  useSigner,
   useSignTypedData,
+  useBalance,
+  useSignMessage,
+  useSendTransaction,
+  useChainId,
+  usePublicClient,
+  usePrepareSendTransaction,
 } from "wagmi";
+import { parseEther } from "viem";
 import logo from "../assets/UniPass.svg";
-import { verifySiweMessage } from "@/unipass/verify_message";
 
 const { TextArea } = Input;
 
@@ -51,17 +55,28 @@ const personalSignMessage = "Welcome to use Wagmi with unipass!";
 
 function App() {
   const { isConnected, address } = useAccount();
-  const provider = useProvider<providers.Web3Provider>();
-  const { data: signer } = useSigner();
+  const chainId = useChainId();
+  const publicClient = usePublicClient();
+  const {
+    data: signature1,
+    signMessageAsync: signMessageAsync1,
+    variables,
+  } = useSignMessage();
+  const { data: signature2, signMessageAsync: signMessageAsync2 } =
+    useSignMessage();
   const { connect, connectors, pendingConnector, isLoading } = useConnect();
+
+  const { config } = usePrepareSendTransaction({
+    to: "0x2B6c74b4e8631854051B1A821029005476C3AF06",
+    value: parseEther("0.01"),
+    data: "0x",
+  });
+  const { sendTransactionAsync: _sendTransaction } = useSendTransaction(config);
+
   const { disconnect } = useDisconnect();
 
   const [balance, setBalance] = useState("0");
-  const [chainId, setChainId] = useState(0);
-  const [signature, setSignature] = useState("");
 
-  const [siweMessage, setSiweMessage] = useState("");
-  const [siweSignature, setSiweSignature] = useState("");
   const [nativeHash, setNativeHash] = useState("");
   const [sendNativeLoading, setSendNativeLoading] = useState(false);
 
@@ -72,54 +87,35 @@ function App() {
   } = useSignTypedData({
     domain: { ...domain, chainId },
     types,
-    value,
+    primaryType: "Mail",
+    message: value,
   });
 
   useEffect(() => {
-    if (provider && signer && address) {
-      provider?.getBalance(address as string).then((res) => {
+    if (publicClient && address) {
+      publicClient?.getBalance({ address }).then((res) => {
         setBalance(weiToEther(res ?? 0));
       });
-
-      signer?.getChainId().then((res) => {
-        setChainId(res);
-      });
     }
-  }, [provider, signer]);
-
-  const signMessage = async () => {
-    if (signer) {
-      const signature = await signer.signMessage(personalSignMessage);
-      setSignature(signature);
-    }
-  };
+  }, [publicClient, address]);
 
   const signWithEthereum = async () => {
-    if (signer && address) {
+    if (address) {
       const siweMessage = createSiweMessage(
         address!,
         "This is a test statement."
       );
-      const _signature = await signer.signMessage(siweMessage);
-      setSiweMessage(siweMessage);
-      setSiweSignature(_signature);
+      const _signature = await signMessageAsync1({ message: siweMessage });
     }
   };
 
   const sendTransaction = async () => {
-    if (signer && address) {
+    if (address) {
       try {
         setSendNativeLoading(true);
-        const txParams = {
-          from: address,
-          to: "0x2B6c74b4e8631854051B1A821029005476C3AF06",
-          value: etherToWei("0.001"),
-          data: "0x",
-        };
 
-        const txResp = await signer.sendTransaction(txParams);
-        const res = await txResp.wait();
-        setNativeHash(res.transactionHash);
+        const txResp = await _sendTransaction?.();
+        setNativeHash(txResp?.hash || "");
       } catch (e: any) {
         message.error(e?.message || "error");
       } finally {
@@ -152,8 +148,6 @@ function App() {
       <Button
         onClick={() => {
           setBalance("0");
-          setChainId(0);
-          setSignature("");
           setNativeHash("");
           restTypedData();
           disconnect();
@@ -179,6 +173,21 @@ function App() {
     return siweMessage.prepareMessage();
   };
 
+  const verifySiweMessage = async () => {
+    if (publicClient && signature1 && address) {
+      const isValid = await publicClient.verifyMessage({
+        address: address,
+        message: variables?.message || "",
+        signature: signature1,
+      });
+      if (isValid) {
+        message.success("verify success");
+      } else {
+        message.error("verify failed");
+      }
+    }
+  };
+
   return (
     <div style={{ marginBottom: "50px", width: "450px" }}>
       <img src={logo} alt="" width={150} />
@@ -197,13 +206,13 @@ function App() {
       <Button
         type="primary"
         disabled={!isConnected}
-        onClick={signMessage}
+        onClick={() => signMessageAsync2({ message: personalSignMessage })}
         style={{ marginRight: "30px" }}
       >
         Sign Message
       </Button>
       <h4>signature:</h4>
-      <TextArea rows={4} value={signature} />
+      <TextArea rows={4} value={signature2} />
 
       <Divider />
       <h3>Sign With Ethereum:</h3>
@@ -216,11 +225,11 @@ function App() {
         Sign With Ethereum
       </Button>
       <h4>siwe signature:</h4>
-      <TextArea rows={4} value={siweSignature} />
+      <TextArea rows={4} value={signature1} />
       <Button
         type="primary"
-        disabled={!siweSignature}
-        onClick={() => verifySiweMessage(siweMessage, siweSignature, provider)}
+        disabled={!signature1}
+        onClick={verifySiweMessage}
         style={{ marginRight: "30px", marginTop: "20px" }}
       >
         Verify Signature
@@ -228,7 +237,11 @@ function App() {
 
       <Divider />
       <h3>Sign Typed Data(EIP-712):</h3>
-      <Button type="primary" onClick={signTypedData} disabled={!isConnected}>
+      <Button
+        type="primary"
+        onClick={() => signTypedData()}
+        disabled={!isConnected}
+      >
         Sign Typed Data(EIP-712)
       </Button>
       <h4>Typed Data Signature:</h4>
